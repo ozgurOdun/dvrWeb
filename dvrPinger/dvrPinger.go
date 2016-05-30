@@ -3,21 +3,55 @@ package dvrPinger
 import (
 	"errors"
 	"fmt"
+	"github.com/ozgurOdun/dvrWeb/dvrDbOps"
 	"os/exec"
 	"regexp"
+	"time"
 )
 
-/*func main() {
-	fmt.Println("hello")
-	s, err := Ping(os.Args[1], false)
-	if err != nil {
-		fmt.Println(err)
-	} else {
-		fmt.Println(s)
-	}
-}*/
+const TIMEOUT = 60
 
-func Ping(host string, ipv6 bool) (string, error) {
+func StartCheckTimer() {
+	ticker := time.NewTicker(TIMEOUT * time.Second)
+	quit := make(chan struct{})
+	for {
+		select {
+		case <-ticker.C:
+			CheckDvrStatus()
+		case <-quit:
+			ticker.Stop()
+			return
+		}
+	}
+}
+
+func CheckDvrStatus() {
+	dvrs, count := dvrDbOps.GetAllDvr()
+	if count > 0 {
+		var i int64
+		var s string
+		var err error
+		var flag bool
+		for i = 0; i < count; i++ {
+			s, err = ping(dvrs[i].IpAddress, false)
+			if err != nil {
+				fmt.Println(err, dvrs[i].IpAddress)
+				if err == errors.New("timeout") {
+					fmt.Println("Deleting dvr with ip address:", dvrs[i].IpAddress)
+					if flag = dvrDbOps.DeleteDvrByIpAddr(dvrs[i].IpAddress); flag == true {
+						fmt.Println("Dvr is deleted successfuly")
+					} else {
+						fmt.Println("Dvr cannot be deleted!!")
+					}
+				}
+			} else {
+				fmt.Println(s, dvrs[i].IpAddress)
+			}
+		}
+	}
+}
+
+func ping(host string, ipv6 bool) (string, error) {
 	matched, err := regexp.Match(`^[\w._:-]+$`, []byte(host))
 	if err != nil {
 		return "", err

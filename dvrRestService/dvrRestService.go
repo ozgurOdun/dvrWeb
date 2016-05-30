@@ -3,7 +3,7 @@ package dvrRestService
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/ozgur/dvrDbOps"
+	"github.com/ozgurOdun/dvrWeb/dvrDbOps"
 	"net/http"
 	"strings"
 )

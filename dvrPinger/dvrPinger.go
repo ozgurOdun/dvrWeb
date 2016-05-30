@@ -25,7 +25,7 @@ func StartCheckTimer() {
 	}
 }
 
-func CheckDvrStatus() {
+func checkDvrStatus() {
 	dvrs, count := dvrDbOps.GetAllDvr()
 	if count > 0 {
 		var i int64

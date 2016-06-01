@@ -17,7 +17,7 @@ func StartCheckTimer() {
 	for {
 		select {
 		case <-ticker.C:
-			CheckDvrStatus()
+			checkDvrStatus()
 		case <-quit:
 			ticker.Stop()
 			return

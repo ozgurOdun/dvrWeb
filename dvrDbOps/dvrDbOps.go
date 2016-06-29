@@ -14,13 +14,19 @@ var o orm.Ormer
 const DATABASE = "../database/new.db"
 
 type Dvr struct {
-	Uid          int       `orm:"pk;auto"`
-	Name         string    `orm:"size(160);unique"`
-	IpAddress    string    `orm:"size(20);unique"`
-	Version      string    `orm:"size(160)"`
-	Status       string    `orm:"size(20)"`
+	Uid          int    `orm:"pk;auto"`
+	Name         string `orm:"size(160);unique"`
+	IpAddress    string `orm:"size(20);unique"`
+	Version      string `orm:"size(160)"`
+	Status       int
 	CreationTime time.Time `orm:"auto_now_add;type(datetime)"`
+	LastAlive    time.Time `orm:"auto_now_add;type(datetime)"`
 }
+
+const (
+	Alive = 1
+	Dead  = 2
+)
 
 func NewDb() {
 	o = orm.NewOrm()
@@ -152,7 +158,7 @@ func UpdateDvrIpAddr(ipAddr string, newIpAddr string) bool {
 	}
 }
 
-func UpdateDvrStatusByName(name string, status string) bool {
+func UpdateDvrStatusByName(name string, status int) bool {
 	dvr := new(Dvr)
 	dvr.Name = name
 	if o.Read(dvr, "Name") == nil {
@@ -170,7 +176,26 @@ func UpdateDvrStatusByName(name string, status string) bool {
 	}
 }
 
-func UpdateDvrStatusById(id int, status string) bool {
+func UpdateDvrLastAliveTime(name string) bool {
+	dvr := new(Dvr)
+	dvr.Name = name
+	if o.Read(dvr, "Name") == nil {
+		now := time.Now()
+		dvr.LastAlive = now
+		_, err := o.Update(dvr, "LastAlive")
+		if err != nil {
+			fmt.Println("Update failed", err)
+			return false
+		} else {
+			return true
+		}
+	} else {
+		fmt.Println("no dvr found in specified name", name)
+		return false
+	}
+}
+
+func UpdateDvrStatusById(id int, status int) bool {
 	dvr := new(Dvr)
 	dvr.Uid = id
 	if o.Read(dvr) == nil {
@@ -188,7 +213,7 @@ func UpdateDvrStatusById(id int, status string) bool {
 	}
 }
 
-func UpdateDvrStatusByIpAddr(ipAddr string, status string) bool {
+func UpdateDvrStatusByIpAddr(ipAddr string, status int) bool {
 	dvr := new(Dvr)
 	dvr.IpAddress = ipAddr
 	if o.Read(dvr, "IpAddress") == nil {

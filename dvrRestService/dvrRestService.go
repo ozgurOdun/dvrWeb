@@ -56,7 +56,12 @@ func AddNewDvr(w http.ResponseWriter, r *http.Request) {
 	dvr.Name = params.Get(":name")
 	dvr.IpAddress = params.Get(":ipstring")
 	dvr.Version = params.Get(":version")
-	dvr.Status = params.Get(":status")
+	status := params.Get(":status")
+	if status == "alive" {
+		dvr.Status = dvrDbOps.Alive
+	} else if status == "dead" {
+		dvr.Status = dvrDbOps.Dead
+	}
 	done := dvrDbOps.AddNewDvr(dvr)
 	if done == true {
 		fmt.Println("Adding new dvr successful. Name:", dvr.Name)
@@ -73,10 +78,21 @@ func AddNewDvr(w http.ResponseWriter, r *http.Request) {
 }
 
 func UpdateDvrStatus(w http.ResponseWriter, r *http.Request) {
+	var status int
 	params := r.URL.Query()
 	name := params.Get(":name")
 	newStatus := params.Get((":newstatus"))
-	done := dvrDbOps.UpdateDvrStatusByName(name, newStatus)
+	if newStatus == "alive" {
+		status = dvrDbOps.Alive
+	} else if newStatus == "dead" {
+		status = 2
+	} else {
+		fmt.Println("Updating dvr status by name failed. Unknown status", name, newStatus)
+		fmt.Fprintf(w, "Failed")
+		return
+	}
+
+	done := dvrDbOps.UpdateDvrStatusByName(name, status)
 	if done == true {
 		fmt.Println("Updating dvr status by name successful. New status for", name, newStatus)
 		fmt.Fprintf(w, "Success")
